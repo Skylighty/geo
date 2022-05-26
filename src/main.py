@@ -1,43 +1,91 @@
+from vertex import Vertex, VertexList, Edge
 import matplotlib.pyplot as plt
 import numpy as np
+import math
 import re
 
-def get_points():
+#xs_test = [3, 6, 8, 7, 11, 14, 13, 11, 9, 7, 5, 6, 5, 4, 1]
+#ys_test = [0, 2, -2, 5, 4, 10, 9, 15, 13, 15, 12, 10, 7, 9, 4]
+
+
+def add_vertexes(vertex_list, sorted_points):
+    for i in sorted_points:
+        vertex_list.vappend(Vertex(sorted_points[i]))
+
+
+def user_input(whicho):
     """Collect input data from user
     first - user declares how mnay points he wants to input
     secondly - user inserts the points in format <x,y>"""
-    lpoints = []
-    points = {}
-    no_of_points = input('Please declare how many points do you have: ')
+    xs = []
+    ys = []
+    list_points = []
+    no_of_points = input('Please input how many points do you have: ')
     for i in range(int(no_of_points)):
-        new_point = input(f'Please input the {i+1} point in format x,y - e.g. 7,0: ')
-        if (not re.match("[0-9].*,[0-9].*", new_point)):
-            print('Error! Wrong input, try again')
-        else:
-            new_point = new_point.split(',')
-            for x in range(0, len(new_point)):
-                new_point[x] = int(new_point[x])
-            lpoints.append(new_point)
-    points = sorted(points.items(), key=sorter)
-    print(points)
-    return points
+        new_point = input(
+            f'Please input the {i+1} point in format x,y - e.g. 7,0: ')
+        # if (not re.match("[0-9].*,[0-9].*", new_point)):
+        #    print('Error! Wrong input, try again')
+        # else:
+        new_point = new_point.split(',')
+        list_points.append(int(new_point[0]), int(new_point[1]))
+        xs.append(int(new_point[0]))
+        ys.append(int(new_point[1]))
+    xs = np.array(xs)
+    ys = np.array(ys)
+    if (whicho == True):
+        return xs, ys
+    else:
+        return list_points
 
-def sorter(item):
-    """Key to sort first by x and then by y"""
-    byx = item[1][0]
-    byy = item[1][1]
-    return (byx, byy)
 
-# def sort_points(points):
-#     """Function sorts points in proper order
-#     the far right point first, then revers-clockwise
-#     with higher 'y' priority"""
-#     points = sorted(points, key=lambda x:x[0])
-        
+def sort_xy(x, y, iflist):
+    """Sort points reverse-clockwise
+    basing on angle since the starting point
+    then rolls the array so the order starts from
+    the far-right vertex"""
+    x0 = np.mean(x)
+    y0 = np.mean(y)
+    r = np.sqrt((x-x0)**2 + (y-y0)**2)
+    angles = np.where((y-y0) > 0, np.arccos((x-x0)/r),
+                      2*np.pi-np.arccos((x-x0)/r))
+    mask = np.argsort(angles)
+    x_sorted = x[mask]
+    y_sorted = y[mask]
+
+    # Find max 'x' and shift the lists
+    max_index = np.argmax(x_sorted)
+    x_sorted = np.roll(x_sorted, 0-max_index)
+    y_sorted = np.roll(y_sorted, 0-max_index)
+
+    # Present sorted points as list of lists
+    sorted_points = []
+    for i in range(len(x_sorted)):
+        sorted_points.append([x_sorted[i], y_sorted[i]])
+
+    # Return list of lists (points) or lists of xs and ys
+    if iflist == True:
+        return sorted_points
+    else:
+        return x_sorted, y_sorted
 
 
 def main():
-    get_points()
+    xs_test = np.array([3, 6, 8, 7, 11, 14, 13, 11, 9, 7, 5, 6, 5, 4, 1])
+    ys_test = np.array([0, 2, -2, 5, 4, 10, 9, 15, 13, 15, 12, 10, 7, 9, 4])
+    sorted_points = sort_xy(xs_test, ys_test, True)
+    print(sorted_points)
+    vl = VertexList()
+    for i in sorted_points:
+        vl.vappend(Vertex(i))
+    vl.calculate_vertex_params()
+    for vertex in vl.vlist:
+        vertex.vprint()
+    for vertex in vl.vlist:
+        print(vertex.vtype)
+        print(vertex.y)
+        print(vertex.next.y)
+        print(vertex.prev.y)
 
 
 if __name__ == "__main__":
